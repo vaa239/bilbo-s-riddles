@@ -6,7 +6,7 @@ Agent-facing tools for the Telegram quiz Worker. Uses **Zod**-validated inputs a
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| `WORKER_URL` | yes | Base URL, e.g. `https://bilbo-riddles.<account>.workers.dev` (no trailing slash) |
+| `WORKER_URL` | yes | Base URL, e.g. `https://bilbo-s-riddles.<account>.workers.dev` (no trailing slash) |
 | `INTERNAL_API_SECRET` | yes for `publish_quiz` / `list_open_rounds` | Same value as Wrangler secret `INTERNAL_API_SECRET` on the Worker; sent as `Authorization: Bearer …` |
 
 `health` only needs `WORKER_URL`.

@@ -16,7 +16,7 @@ npm install
 npx wrangler deploy
 ```
 
-Note the deployed URL, e.g. `https://bilbo-riddles.<subdomain>.workers.dev`.
+Note the deployed URL, e.g. `https://bilbo-s-riddles.<subdomain>.workers.dev` (matches `name` in `wrangler.toml`).
 
 ## Secrets and vars (Wrangler)
 
@@ -46,7 +46,7 @@ After first deploy, call Bot API (replace placeholders):
 
 ```bash
 curl "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
-  -d "url=https://bilbo-riddles.<subdomain>.workers.dev/webhook" \
+  -d "url=https://bilbo-s-riddles.<subdomain>.workers.dev/webhook" \
   -d "secret_token=<same as WEBHOOK_SECRET>"
 ```
 
@@ -88,7 +88,7 @@ The **stdio** MCP package calls the **deployed Worker** only (`WORKER_URL` + `IN
 
 ```bash
 # Windows PowerShell example
-$env:WORKER_URL="https://bilbo-riddles.<account>.workers.dev"
+$env:WORKER_URL="https://bilbo-s-riddles.<account>.workers.dev"
 $env:INTERNAL_API_SECRET="<same as wrangler secret>"
 npm run mcp
 ```
@@ -97,6 +97,8 @@ Details: [`mcp/README.md`](../../mcp/README.md). Tools: **`publish_quiz`**, **`l
 
 ## Limitations (v1)
 
+- **Worker name** is `bilbo-s-riddles` in `wrangler.toml` so it matches **Cloudflare Workers Builds** / your GitHub repo name. The `*.workers.dev` hostname follows that name.
+- **Workers Free + Durable Objects** use a SQLite-backed DO namespace (`new_sqlite_classes` in `wrangler.toml`). Paid-only legacy `new_classes`-only configs hit API error **10097** on Free.
 - **Durable Object** holds state; destroying the DO or wiping namespace loses rounds—document ops procedures before doing so.
 - **Pins**: Some clients/groups may still behave oddly with multiple pins—see spec assumptions.
 
@@ -107,7 +109,7 @@ Repository **Secrets** (Settings → Secrets and variables → Actions):
 | Secret | Required for | Purpose |
 |--------|----------------|---------|
 | `CLOUDFLARE_API_TOKEN` | Deploy | `wrangler deploy` |
-| `WORKER_URL` | Deploy smoke test | e.g. `https://bilbo-riddles.<account>.workers.dev` — **no trailing slash** |
+| `WORKER_URL` | Deploy smoke test | e.g. `https://bilbo-s-riddles.<account>.workers.dev` — **no trailing slash** |
 
 Workflows live under `.github/workflows/`:
 

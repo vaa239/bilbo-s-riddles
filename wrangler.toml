@@ -1,4 +1,5 @@
-name = "bilbo-riddles"
+# Must match the Worker name in Cloudflare (repo / Workers Builds use bilbo-s-riddles).
+name = "bilbo-s-riddles"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
 
@@ -6,9 +7,10 @@ compatibility_date = "2025-04-01"
 name = "QUIZ_COORDINATOR"
 class_name = "QuizCoordinator"
 
+# Workers Free plan requires SQLite-backed Durable Objects (error 10097 if you use legacy new_classes only).
 [[migrations]]
 tag = "v1"
-new_classes = ["QuizCoordinator"]
+new_sqlite_classes = ["QuizCoordinator"]
 
 [vars]
 # Overridden in CI: APP_VERSION, GIT_SHA
