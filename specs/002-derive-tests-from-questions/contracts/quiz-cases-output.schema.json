@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bilbo-riddles.local/schemas/quiz-cases-output.json",
+  "title": "TelegramExportQuizExtractionResult",
+  "type": "object",
+  "required": ["summary", "cases"],
+  "additionalProperties": false,
+  "properties": {
+    "summary": {
+      "type": "object",
+      "required": [
+        "testCaseCount",
+        "skippedMessageCount",
+        "flaggedCount",
+        "warnings"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "exportLabel": { "type": ["string", "null"] },
+        "testCaseCount": { "type": "integer", "minimum": 0 },
+        "skippedMessageCount": { "type": "integer", "minimum": 0 },
+        "flaggedCount": { "type": "integer", "minimum": 0 },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/quizTestCase" }
+    }
+  },
+  "$defs": {
+    "quizTestCase": {
+      "type": "object",
+      "required": [
+        "id",
+        "sourceOrder",
+        "sourceMessageId",
+        "questionText",
+        "expectedAnswers",
+        "flags"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "sourceOrder": { "type": "integer", "minimum": 0 },
+        "sourceMessageId": { "type": "string", "minLength": 1 },
+        "questionNumber": { "type": ["integer", "null"], "minimum": 1 },
+        "roundLabel": { "type": ["string", "null"] },
+        "questionText": { "type": "string" },
+        "hostNotes": { "type": ["string", "null"] },
+        "expectedAnswers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "alternateAccept": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "flags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

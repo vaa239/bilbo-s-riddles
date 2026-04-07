@@ -1,0 +1,15 @@
+name = "bilbo-riddles"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+[[durable_objects.bindings]]
+name = "QUIZ_COORDINATOR"
+class_name = "QuizCoordinator"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["QuizCoordinator"]
+
+[vars]
+# Overridden in CI: APP_VERSION, GIT_SHA
+# Set PLAY_CHAT_ID, TEST_CHAT_ID, OPERATOR_USER_IDS in dashboard or .dev.vars (see quickstart)

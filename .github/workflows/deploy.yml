@@ -1,0 +1,126 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["Auto-merge to main"]
+    types: [completed]
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare Workers
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Sync to merge tip on main
+        run: git fetch origin main && git reset --hard origin/main
+
+      - name: Record deploy commit SHA
+        id: deploy
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "Deploying commit: $(git rev-parse HEAD) $(git log -1 --oneline)"
+
+      - name: Compute and push version tag
+        id: version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          PREFIX=$(echo "$COMMIT_MSG" | sed 's/[:(].*//' | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+          LATEST=$(git tag --sort=-v:refname | grep '^v[0-9]*\.[0-9]*\.[0-9]*$' | head -1)
+          if [ -z "$LATEST" ]; then LATEST="v0.0.0"; fi
+          VERSION="${LATEST#v}"
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+          if [ "$PREFIX" = "feat" ]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+            git tag "$NEW_TAG"
+            git push origin "$NEW_TAG"
+            echo "MINOR bump: $LATEST → $NEW_TAG"
+          elif [ "$PREFIX" = "fix" ]; then
+            PATCH=$((PATCH + 1))
+            NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+            git tag "$NEW_TAG"
+            git push origin "$NEW_TAG"
+            echo "PATCH bump: $LATEST → $NEW_TAG"
+          else
+            NEW_TAG="$LATEST"
+            echo "No version bump (prefix='$PREFIX'). Deploying as $NEW_TAG"
+          fi
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy
+        run: npx wrangler deploy --var "APP_VERSION:${{ steps.version.outputs.tag }}" --var "GIT_SHA:${{ steps.deploy.outputs.sha }}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Smoke test — verify deployed version + git SHA
+        env:
+          EXPECT_SHA: ${{ steps.deploy.outputs.sha }}
+        run: |
+          WORKER_URL="${{ secrets.WORKER_URL }}"
+          if [ -z "$WORKER_URL" ]; then
+            echo "WORKER_URL secret is not set — cannot run smoke test"
+            exit 1
+          fi
+          for i in 1 2 3; do
+            echo "Attempt $i/3..."
+            RESPONSE=$(curl -sf "$WORKER_URL/api/health" 2>/dev/null || echo "")
+            if [ -z "$RESPONSE" ]; then
+              echo "No response from $WORKER_URL/api/health, retrying in 5s..."
+              sleep 5
+              continue
+            fi
+            VERSION=$(echo "$RESPONSE" | jq -r '.version // empty')
+            GIT_SHA=$(echo "$RESPONSE" | jq -r '.git_sha // empty')
+            if [ "$VERSION" = "dev" ]; then
+              echo "Smoke test FAILED: version='dev' — APP_VERSION injection failed"
+              exit 1
+            fi
+            if ! echo "$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "Smoke test FAILED: version '$VERSION' does not match expected format v[N].[N].[N]"
+              sleep 5
+              continue
+            fi
+            if [ -z "$GIT_SHA" ] || [ "$GIT_SHA" = "null" ]; then
+              echo "Smoke test FAILED: git_sha missing — redeploy with GIT_SHA var (worker must expose /api/health)"
+              exit 1
+            fi
+            if [ "$GIT_SHA" != "$EXPECT_SHA" ]; then
+              echo "Smoke test FAILED: health.git_sha=$GIT_SHA does not match expected merge commit $EXPECT_SHA"
+              exit 1
+            fi
+            echo "Smoke test passed: version=$VERSION git_sha=$GIT_SHA"
+            {
+              echo "## Deploy verification"
+              echo "| Field | Value |"
+              echo "|-------|-------|"
+              echo "| Semver (APP_VERSION) | \`$VERSION\` |"
+              echo "| Git commit (GIT_SHA) | \`$GIT_SHA\` |"
+              echo "| Matches this workflow run | yes |"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          done
+          echo "Smoke test failed after 3 attempts"
+          exit 1

@@ -1,0 +1,42 @@
+﻿---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+# bilbo-s-riddles Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-04-07
+
+## Active Technologies
+- TypeScript (ES modules), Node compatibility as required by Wrangler toolchain + **grammY** (or thin `fetch` to Bot API only), **wrangler** for deploy; optional **zod** for payload validation (001-telegram-quiz-bot)
+- **Cloudflare Durable Objects** — one coordinator DO per bot id holding in-memory map of open `QuizRound`s; no D1 required for v1 (001-telegram-quiz-bot)
+- TypeScript (ES modules), Node 20 (local + CI) + **wrangler**, **grammY** (or thin `fetch` to Bot API); **@modelcontextprotocol/sdk** + **zod** for MCP; **@biomejs/biome** + **vitest** for quality gates (001-telegram-quiz-bot)
+- **Cloudflare Durable Objects** — coordinator DO with in-memory map of open `QuizRound`s; no D1 for v1 (001-telegram-quiz-bot)
+- TypeScript (ES modules), Node 20 (local + CI) + **node-html-parser**, **fflate**; **@modelcontextprotocol/sdk** + **zod** (MCP tool); **@biomejs/biome** + **vitest** (existing) (002-derive-tests-from-questions)
+- N/A — in-memory parse; optional write of JSON left to operator (002-derive-tests-from-questions)
+
+- Python 3.11+ + aiogram 3.x (Telegram Bot API), pydantic v2 (settings/payload validation), uv or pip for packaging (001-telegram-quiz-bot)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+cd src; pytest; ruff check .
+
+## Code Style
+
+Python 3.11+: Follow standard conventions
+
+## Recent Changes
+- 002-derive-tests-from-questions: Added TypeScript (ES modules), Node 20 (local + CI) + **node-html-parser**, **fflate**; **@modelcontextprotocol/sdk** + **zod** (MCP tool); **@biomejs/biome** + **vitest** (existing)
+- 001-telegram-quiz-bot: Added TypeScript (ES modules), Node 20 (local + CI) + **wrangler**, **grammY** (or thin `fetch` to Bot API); **@modelcontextprotocol/sdk** + **zod** for MCP; **@biomejs/biome** + **vitest** for quality gates
+- 001-telegram-quiz-bot: Added TypeScript (ES modules), Node compatibility as required by Wrangler toolchain + **grammY** (or thin `fetch` to Bot API only), **wrangler** for deploy; optional **zod** for payload validation
+
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

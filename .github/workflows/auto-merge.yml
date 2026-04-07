@@ -1,0 +1,40 @@
+name: Auto-merge to main
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches-ignore: [main]
+
+jobs:
+  merge:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Merge branch to main
+        run: |
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          git pull origin main
+          COMMITS=$(git log --pretty=%s origin/main..origin/$BRANCH 2>/dev/null || echo "")
+          PREFIX="chore"
+          if echo "$COMMITS" | grep -qiE '^feat[:(]'; then PREFIX="feat"
+          elif echo "$COMMITS" | grep -qiE '^fix[:(]'; then PREFIX="fix"
+          elif echo "$COMMITS" | grep -qiE '^refactor[:(]'; then PREFIX="refactor"
+          elif echo "$COMMITS" | grep -qiE '^docs[:(]'; then PREFIX="docs"
+          elif echo "$COMMITS" | grep -qiE '^ci[:(]'; then PREFIX="ci"
+          fi
+          MSG="${PREFIX}: ${BRANCH} (auto-merge)"
+          echo "Merge commit message: $MSG"
+          git merge --no-ff origin/$BRANCH -m "$MSG"
+          git push origin main

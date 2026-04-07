@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local/bilbo-riddles/deploy-health.schema.json",
+  "title": "DeployHealthResponse",
+  "description": "JSON returned by GET /api/health for GitHub Actions deploy smoke test",
+  "type": "object",
+  "required": ["version", "git_sha"],
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semver tag from CI (APP_VERSION); must not be the string 'dev' in production deploy"
+    },
+    "git_sha": {
+      "type": ["string", "null"],
+      "description": "Full or short git SHA of deployed commit (GIT_SHA)"
+    }
+  }
+}

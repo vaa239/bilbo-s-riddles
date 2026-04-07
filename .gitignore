@@ -1,0 +1,10 @@
+node_modules/
+.wrangler/
+dist/
+.dev.vars
+.env
+.env.*
+!.env.example
+
+# Local exports / archives (do not commit)
+*.zip

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local/bilbo-riddles/quiz-publish-payload.schema.json",
+  "title": "QuizPublishPayload",
+  "description": "Logical payload for creating a quiz round (after operator FSM or future import). Used for validation before sendMessage.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target", "question_text", "options", "correct_option_index", "explanation_text"],
+  "properties": {
+    "target": {
+      "type": "string",
+      "enum": ["play", "test"],
+      "description": "Maps to PLAY_CHAT_ID or TEST_CHAT_ID via destinations resolver"
+    },
+    "question_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+    },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 20,
+      "items": { "type": "string", "minLength": 1, "maxLength": 2000 }
+    },
+    "correct_option_index": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Zero-based index into options"
+    },
+    "explanation_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+    },
+    "posted_by_line": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "description": "Exact text for the final line of the public quiz message (Telegram operator attribution per FR-008a). In the DM publish flow, omit and derive from the operator’s Telegram User; MCP or other callers MUST supply it when no Telegram User is available."
+    }
+  }
+}
